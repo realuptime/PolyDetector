@@ -26,6 +26,8 @@ sys     0m0.000s
 
 $
 
+![Screenshot](Screen Shot 2021-02-09 at 20.21.49.png)
+
 # Results:
 
 [100] p:{-5.966534 -16.157389}
