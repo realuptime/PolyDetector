@@ -539,7 +539,6 @@ void PolyLine::CalculateFirstAndLastPoint()
     {
         std::swap(a.x, b.x);
         std::swap(a.y, b.y);
-        std::swap(a.z, b.z);
     }
 }
 
@@ -561,7 +560,7 @@ bool PolyDetector::DetectPolygons()
     logoutf("%s", "Polygon detection");
 
     if (!silent)
-        logoutf("%s", "Line set contains %d lines.", GetLineCount());
+        logoutf("Line set contains %d lines.", GetLineCount());
 
     if (!RemoveIntersections())
     {
@@ -570,7 +569,7 @@ bool PolyDetector::DetectPolygons()
     }
 
     if (!silent)
-        logoutf("%s", "After removal, line set contains %d lines.", GetLineCount());
+        logoutf("After removal, line set contains %d lines.", GetLineCount());
 
     SortLines();
     
@@ -581,10 +580,10 @@ bool PolyDetector::DetectPolygons()
     }
 
     //if (!silent)
-        logoutf("%s", "Polygon set contains %d polygons.", GetPolyCount());
+        logoutf("Polygon set contains %d polygons.", GetPolyCount());
     
     //SimplifyPolys(0.0);
-    //logoutf("%s", "Polygon set contains %d polygons after simplification!.", GetPolyCount());
+    //logoutf("Polygon set contains %d polygons after simplification!.", GetPolyCount());
 
     return true;
 }

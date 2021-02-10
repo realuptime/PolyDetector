@@ -1,2 +1,2 @@
 all:
-	g++ PolyDetector.cpp main.cpp -std=c++11 -o app
+	g++ PolyDetector.cpp main.cpp -g0 -O3 -std=c++11 -o app
