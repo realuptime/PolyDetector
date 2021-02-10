@@ -30,11 +30,11 @@ $
 ![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-10%20at%2013.19.53.png)
 
 # Motivation
-Originally I tried the approach of Alfredo Ferreira (https://web.ist.utl.pt/alfredo.ferreira/publications/12EPCG-PolygonDetection.pdf) and for the lines from main.cpp it took more than 15 minutes! Plus that it uses a few matrixes with the size of the number of vertives squared! I consider that a naive approach.
-
-I kept the original idea of breaking the line segments by their intersections, but without the sweep line method.
+Originally I tried the approach of Alfredo Ferreira (https://web.ist.utl.pt/alfredo.ferreira/publications/12EPCG-PolygonDetection.pdf) and for the lines from main.cpp it took more than 15 minutes! Plus that it uses a few matrixes with the size of the number of vertives squared!
 
 While it is impossible to use, I began simplifying the algorithm using a recursion algorightm (see function BuildCycle() ).
+
+I kept the original idea of breaking the line segments by their intersections, but without the sweep line method.
 
 It makes sure that no line segments are crossed (collinear) and that the polygon is convex. Plus that each line segment point is taken maximum 2 times (it is connected to another line segment).
 
