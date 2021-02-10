@@ -38,7 +38,7 @@ I kept the original idea of breaking the line segments by their intersections, b
 
 It makes sure that no line segments are crossed (collinear) and that the polygon is convex. Plus that each line segment point is taken maximum 2 times (it is connected to another line segment).
 
-With a bit of care, the algo can be optimized at least ten times (remove recursion, precompute similar points using indices, ...), but I leave that as a homework ;)
+With a bit of care, the algo can be optimized at least ten times (remove recursion, precompute similar points using indices, we already know the intersections (optimize AddLineId), ...), but I leave that as a homework ;)
 Right now the detector has no limitation and by optimizing it, it could be used for very large line sets.
 
 **PolyDetector** can be reused by taking advantage of the caching previously done (processed set, neighbors graph ...).
