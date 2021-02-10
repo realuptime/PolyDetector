@@ -4,15 +4,24 @@ Detect all closed polygons given a set of line segments
 See how fast it is:
 
 $ time ./app
+
 Polygon detection
+
 Line intersection removal
+
 582 lines after intersection removal
+
 Polygon set construction (MY)
+
 neighbors MatSize:582
+
 Polygon set contains 195 polygons.
 
+
 real    0m0.057s
+
 user    0m0.047s
+
 sys     0m0.000s
 
 $
