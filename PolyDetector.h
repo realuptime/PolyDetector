@@ -37,7 +37,7 @@ SOFTWARE.
 
 struct PolyDetector;
 
-using PointType = vec; // define whatever you want in here
+using PointType = vec; // define whatever vector type you want in here
 using CycleSet = std::set<uint32_t>;
 
 struct PolyCycle
