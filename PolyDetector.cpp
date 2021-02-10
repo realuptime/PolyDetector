@@ -335,7 +335,7 @@ bool PolyLine::PolyIntersectsProper(const PolyLine& line) const
     if (Collinear(c, a, b) || Collinear(d, a, b) || Collinear(a, c, d) || Collinear(b, c, d))
         return false;
 
-    return (Left(c, a, b) || Left(d, a, b)) && (Left(a, c, d) || Left(b, c, d));
+    return (Left(c, a, b) != Left(d, a, b)) && (Left(a, c, d) != Left(b, c, d));
 }
 
 bool PolyLine::IntersectionPoint(const PolyLine &line, PointType &pos) const
