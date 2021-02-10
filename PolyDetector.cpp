@@ -1,7 +1,6 @@
 
-#include "common.h"
-#include "obb.h"
 #include "PolyDetector.h"
+#include <cmath>
 
 #include <set>
 
@@ -313,7 +312,7 @@ bool PolyLine::PolyIntersectsProper(const PolyLine& line) const
     if (Collinear(c, a, b) || Collinear(d, a, b) || Collinear(a, c, d) || Collinear(b, c, d))
         return false;
 
-    return (Left(c, a, b) ^ Left(d, a, b)) && (Left(a, c, d) ^ Left(b, c, d) );
+    return (Left(c, a, b) || Left(d, a, b)) && (Left(a, c, d) || Left(b, c, d));
 }
 
 bool PolyLine::IntersectionPoint(const PolyLine &line, PointType &pos) const
@@ -341,7 +340,7 @@ bool PolyLine::IntersectionPoint(const PolyLine &line, PointType &pos) const
     // see if segments are parallel
     if (denom == 0.0)
     {
-        logoutf("zero denom!");
+        logoutf("%s", "zero denom!");
         return false;
     }
 
@@ -374,7 +373,7 @@ void PolyLine::SortIntersectionsList()
 */
 bool PolyDetector::RemoveIntersections()
 {
-    logoutf("Line intersection removal");
+    logoutf("%s", "Line intersection removal");
     
     // prior to removing overlapping, one must
     // remove all zero length line, otherwise the results
@@ -559,33 +558,33 @@ void PolyDetector::SortLines(void)
 */
 bool PolyDetector::DetectPolygons()
 {
-    logoutf("Polygon detection");
+    logoutf("%s", "Polygon detection");
 
     if (!silent)
-        logoutf("Line set contains %d lines.", GetLineCount());
+        logoutf("%s", "Line set contains %d lines.", GetLineCount());
 
     if (!RemoveIntersections())
     {
-        logoutf("Error: Could not successfully remove line intersections.");
+        logoutf("%s", "Error: Could not successfully remove line intersections.");
         return false;
     }
 
     if (!silent)
-        logoutf("After removal, line set contains %d lines.", GetLineCount());
+        logoutf("%s", "After removal, line set contains %d lines.", GetLineCount());
 
     SortLines();
     
     if (!FindPolys())
     {
-        logoutf("Error constructing the polygon set.");
+        logoutf("%s", "Error constructing the polygon set.");
         return false;
     }
 
     //if (!silent)
-        logoutf("Polygon set contains %d polygons.", GetPolyCount());
+        logoutf("%s", "Polygon set contains %d polygons.", GetPolyCount());
     
     //SimplifyPolys(0.0);
-    //logoutf("Polygon set contains %d polygons after simplification!.", GetPolyCount());
+    //logoutf("%s", "Polygon set contains %d polygons after simplification!.", GetPolyCount());
 
     return true;
 }
@@ -743,7 +742,8 @@ bool PolyPol::PolyContains(const PointType &point, bool strict)
 
     return inside;
 }
-        
+
+#if 0
 bool PolyPol::PolyContains(const PolyPol &other, bool strict)
 {
     // first lets see if all vertices in polyline lay inside or in the border of the polygon
@@ -755,6 +755,7 @@ bool PolyPol::PolyContains(const PolyPol &other, bool strict)
     
     return true;
 }
+#endif
 
 /***
 * @desc simplifies the polygons in this set
@@ -762,7 +763,7 @@ bool PolyPol::PolyContains(const PolyPol &other, bool strict)
 */
 void PolyDetector::SimplifyPolys(double smaller_polygon_length)
 {
-    logoutf("Polygon set simplification");
+    logoutf("%s", "Polygon set simplification");
 
     // remove small polygons
     uint32_t nRemoved = 0;
@@ -817,11 +818,6 @@ void PolyDetector::SimplifyPolys(double smaller_polygon_length)
     if (nRemoved)
         logoutf("Merged %d contained polygons", nRemoved);
 #endif
-}
-
-void PolyDetector::AddLine(const obb::LineSegment &line)
-{
-    AddLine(PolyLine(line.a, line.b));
 }
 
 void PolyDetector::AddLine(const PolyLine &line)
@@ -931,13 +927,13 @@ bool PolyCycle::AddLineId(PolyDetector &pd, uint32_t id)
             return false;
         }
         
-        obb::LineSegment ls(l->center, l1->center);
+        PolyLine ls(l->center, l1->center);
         for (auto &id2 : idx)
         {
             if (id2 != id && id2 != id1)
             {
                 auto l2 = pd.findLine(id2);
-                if (l2 && ls.Intersects(*l2))
+                if (l2 && ls.PolyIntersects(*l2))
                 {
                     return false;
                 }
@@ -1040,7 +1036,7 @@ bool PolyDetector::BuildCycle(uint32_t id, PolyCycle cycle) // as value!
 
 bool PolyDetector::FindPolys()
 {
-    logoutf("Polygon set construction (MY)");
+    logoutf("%s", "Polygon set construction (MY)");
     
     //silent = 0;
     
@@ -1209,6 +1205,7 @@ bool PolyDetector::FindPolys()
     return true;
 }
 
+#if 0
 obb::Line &PolyLine::calcNormal(PolyDetector &pd)
 {
     auto line = pd.findLine(id);
@@ -1252,6 +1249,7 @@ void PolyPol::genTriangePoints(PolyDetector &pd)
         }
     }
 }
+#endif
 
 double PolyPol::TriangleArea(PolyDetector &pd)
 {

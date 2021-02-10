@@ -1,12 +1,20 @@
 
 #pragma once
 
+#include "geom.h"
+
+#include <algorithm>
+#include <cstdint>
+#include <string>
 #include <map>
 #include <set>
+#include <vector>
+
+#define logoutf(format, ...) printf(format "\n", __VA_ARGS__)
 
 struct PolyDetector;
 
-using PointType = vec;
+using PointType = vec; // define whatever you want in here
 using CycleSet = std::set<uint32_t>;
 
 struct PolyCycle
@@ -60,10 +68,12 @@ struct PolyCycle
 };
 using PolyCycles = std::vector<PolyCycle>;
 
-struct PolyLine : public obb::LineSegment
+struct PolyLine 
 {
-    PolyLine() : obb::LineSegment() {}
-    PolyLine(const PointType &aP, const PointType &bP): obb::LineSegment(aP, bP)
+    vec a, b;
+
+    PolyLine() {}
+    PolyLine(const PointType &aP, const PointType &bP): a(aP), b(bP)
     {
         CalculateFirstAndLastPoint();
         center = a;
@@ -76,9 +86,9 @@ struct PolyLine : public obb::LineSegment
     PointType center;
     uint32_t id = 0;
     uint32_t test0 = 0, test1 = 0;
-    obb::Line normal;
-    
-    obb::Line &calcNormal(PolyDetector &pd);
+
+    //obb::Line normal;
+    //obb::Line &calcNormal(PolyDetector &pd);
     
     bool HasCommonPoints(const PolyLine &line) const;
     
@@ -105,8 +115,10 @@ struct PolyLine : public obb::LineSegment
     static int iCompareLineOrder(const PolyLine &l1, PolyLine &l2);
 };
 
-struct PolyPol : public obb::Polygon
+struct PolyPol
 {
+    std::vector<vec> p;
+
     uint32_t GetCount() const { return (uint32_t)p.size(); };
     
     bool IsAdjacent(const PolyPol &p, bool strict = false) const;
@@ -150,7 +162,6 @@ struct PolyDetector
     uint32_t GetPolyCount() const { return (uint32_t)polys.size(); };
     void SortLines();
     
-    void AddLine(const obb::LineSegment &line);
     void AddLine(const PolyLine &line);
     
     bool CycleProcessed(const CycleSet &cycle) const;
