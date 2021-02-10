@@ -27,9 +27,7 @@ sys     0m0.000s
 $
 
 ![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-09%20at%2020.21.49.png)
-![Screenshot](Screen Shot 2021-02-09 at 20.21.49.png)
-
-![Optional Text](../master/Screen Shot 2021-02-09 at 20.21.49.png)
+![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-10%20at%2013.19.53.png)
 
 # Results:
 
