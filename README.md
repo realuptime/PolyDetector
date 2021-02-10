@@ -39,6 +39,7 @@ While it is impossible to use, I began simplifying the algorithm using a recursi
 It makes sure that no line segments are crossed (collinear) and that the polygon is convex. Plus that each line segment point is taken maximum 2 times (it is connected to another line segment).
 
 With a bit of care, the algo can be optimized at least ten times (remove recursion, precompute similar points using indices, ...), but I leave that as a homework ;)
+Right now the detector has no limitation and by optimizing it, it could be used for very large line sets.
 
 **PolyDetector** can be reused by taking advantage of the caching previously done (processed set, neighbors graph ...).
 
@@ -206,6 +207,33 @@ for (auto &kv : _neighbors) // point by point
         PolyCycle cycle;
         cycle.startIdx = kv.first;
         BuildCycle(kv.first, cycle);
+    }
+```
+
+# Usage
+Very simple: pass the list of line segments in 2D, detect and process the detected polygons.
+
+```
+    std::vector<PolyLine> lines = {
+        { { 0.481273, 19.263916, 0.000000 }, { 2.672669, -20.676010, 0.000000 } },
+    ....
+    };
+    PolyDetector pd; // can be reused
+    for (auto &l : lines)
+        pd.AddLine(l);
+
+    if (!pd.DetectPolygons()) // can be reused
+    {
+        logoutf("%s", "WARN: cannot detect polys!");
+        return -1;
+    }
+
+    for (auto &poly : pd.polys) // here are the detected polys
+    {
+        for (auto &p : poly.p)
+        {
+            logoutf("[%u] p:{%f %f}", poly.id, p.x, p.y);
+        }
     }
 ```
 
