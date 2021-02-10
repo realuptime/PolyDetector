@@ -215,7 +215,7 @@ Very simple: pass the list of line segments in 2D, detect and process the detect
 
 ```
     std::vector<PolyLine> lines = {
-        { { 0.481273, 19.263916, 0.000000 }, { 2.672669, -20.676010, 0.000000 } },
+        { { 0.481273, 19.263916 }, { 2.672669, -20.676010 } },
     ....
     };
     PolyDetector pd; // can be reused
