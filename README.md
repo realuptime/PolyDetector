@@ -34,7 +34,7 @@ Originally I tried the approach of Alfredo Ferreira (https://web.ist.utl.pt/alfr
 
 I kept the original idea of breaking the line segments by their intersections, but without the sweep line method.
 
-While it is impossible to use, I begun simplifying the algorithm using a recursion algorightm (see function BuildCycle() ).
+While it is impossible to use, I began simplifying the algorithm using a recursion algorightm (see function BuildCycle() ).
 
 It makes sure that no line segments are crossed (collinear) and that the polygon is convex. Plus that each line segment point is taken maximum 2 times (it is connected to another line segment).
 
