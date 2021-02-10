@@ -18,8 +18,7 @@ neighbors MatSize:582
 
 Polygon set contains 195 polygons.
 
-
-real    0m0.057s
+real    **0m0.057s**
 
 user    0m0.047s
 
@@ -31,13 +30,17 @@ $
 ![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-10%20at%2013.19.53.png)
 
 # Motivation
-Originally I tried the approach of Alfredo Ferreira (https://web.ist.utl.pt/alfredo.ferreira/publications/12EPCG-PolygonDetection.pdf) and for lines in main.cpp it took more than 15 minutes plus a few matrixes with the size of number of vertives squared! I wonder why anyone would do that!
+Originally I tried the approach of Alfredo Ferreira (https://web.ist.utl.pt/alfredo.ferreira/publications/12EPCG-PolygonDetection.pdf) and for the lines from main.cpp it took more than 15 minutes! Plus that it uses a few matrixes with the size of the number of vertives squared! I consider that a naive approach.
 
-I considered that impossible to use, so I begun simplifying the algorithm using a the recursive function BuildCycle().
+I kept the original idea of breaking the line segments by their intersections, but without the sweep line method.
 
-It makes sure that no line segments are crossed (collinear) and that the polygon is convex. Plus that each line segment point is taken maximum 2 times.
+While it is impossible to use, I begun simplifying the algorithm using a recursion algorightm (see function BuildCycle() ).
 
-With a bit of care, the algo can be optimized at least ten times. I leave that as a homework ;)
+It makes sure that no line segments are crossed (collinear) and that the polygon is convex. Plus that each line segment point is taken maximum 2 times (it is connected to another line segment).
+
+With a bit of care, the algo can be optimized at least ten times (remove recursion, precompute similar points using indices, ...), but I leave that as a homework ;)
+
+**PolyDetector** can be reused by taking advantage of the caching previously done (processed set, neighbors graph ...).
 
 ```
 bool PolyCycle::AddLineId(PolyDetector &pd, uint32_t id)
@@ -91,7 +94,6 @@ bool PolyCycle::AddLineId(PolyDetector &pd, uint32_t id)
 
 bool PolyDetector::BuildCycle(uint32_t id, PolyCycle cycle) // as value!
 {
-
     //if (cycle.idx.size() >= 15) // limit the number of poly edges? maybe someone needs that
     //    return true;
 
@@ -107,6 +109,7 @@ bool PolyDetector::BuildCycle(uint32_t id, PolyCycle cycle) // as value!
     if (!silent)
         cycle.print((std::string("[PROC:") + std::to_string(id) + std::string("]")).c_str());
 
+    // cycle closed! -> cache it
     if (cycle.canBeClosed(id))
     {
         cycle.isClosed = true;
@@ -130,6 +133,7 @@ bool PolyDetector::BuildCycle(uint32_t id, PolyCycle cycle) // as value!
         return true;
     }
 
+    // the cycle should be discarded
     if (!cycle.AddLineId(*this, l->id))
     {
         return true;
