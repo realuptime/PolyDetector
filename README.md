@@ -26,7 +26,10 @@ sys     0m0.000s
 
 $
 
+![alt tag](http://url/to/img.png)
 ![Screenshot](Screen Shot 2021-02-09 at 20.21.49.png)
+
+![Optional Text](../master/Screen Shot 2021-02-09 at 20.21.49.png)
 
 # Results:
 
