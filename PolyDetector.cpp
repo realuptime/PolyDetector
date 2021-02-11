@@ -544,6 +544,23 @@ uint32_t PolyDetector::DetectAllIntersections()
             // if the current line intersects with other line
             if (l1.PolyIntersects(l2))
             {
+ #if 1
+                // l2 needs to have an additional intersection point!
+                bool anotherIntersection = false;
+                for (size_t k = 0; k < counter; k++)
+                {
+                    if (k != i && k != j)
+                    {
+                        auto &l3 = lines[k];
+                        if (l2.PolyIntersects(l3))
+                        {
+                            anotherIntersection = true;
+                            break;
+                        }
+                    }
+                }
+                if (!anotherIntersection) continue;;
+#endif
                 if (l1.IntersectionPoint(l2, intersection))
                 {
                     l1.intersections.push_back(intersection);
