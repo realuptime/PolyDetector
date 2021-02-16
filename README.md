@@ -1,21 +1,241 @@
 # PolyDetector
 Detect all closed polygons given a set of line segments
 
+# Speed
 See how fast it is:
 
 $ time ./app
+
 Polygon detection
+
 Line intersection removal
+
 582 lines after intersection removal
+
 Polygon set construction (MY)
+
 neighbors MatSize:582
+
 Polygon set contains 195 polygons.
 
-real    0m0.057s
+real    **0m0.057s**
+
 user    0m0.047s
+
 sys     0m0.000s
 
 $
+
+![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-09%20at%2020.21.49.png)
+![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-10%20at%2013.19.53.png)
+
+# Motivation
+Originally I tried the approach of Alfredo Ferreira (https://web.ist.utl.pt/alfredo.ferreira/publications/12EPCG-PolygonDetection.pdf) and for the lines from main.cpp it took more than 15 minutes! Plus that it uses a few matrixes with the size of the number of vertives squared!
+
+While it is impossible to use, I began simplifying the algorithm using a recursion algorightm (see function BuildCycle() ).
+
+I kept the original idea of breaking the line segments by their intersections, but without the sweep line method.
+
+It makes sure that no line segments are crossed (collinear) and that the polygon is convex. Plus that each line segment point is taken maximum 2 times (it is connected to another line segment).
+
+With a bit of care, the algo can be optimized at least ten times (remove recursion, precompute similar points using indices, we already know the intersections (optimize AddLineId), ...), but I leave that as a homework ;)
+Right now the detector has no limitation and by optimizing it, it could be used for very large line sets.
+
+**PolyDetector** can be reused by taking advantage of the caching previously done (processed set, neighbors graph ...).
+
+```
+bool PolyCycle::AddLineId(PolyDetector &pd, uint32_t id)
+{
+    auto l = pd.findLine(id);
+    if (!l) return false;
+
+    l->test0 = 0; // a cnt
+    l->test1 = 0; // b cnt
+
+    for (auto &id1 : idx)
+    {
+        auto l1 = pd.findLine(id1);
+        if (!l1) continue;
+
+        if (!pointsDiffer(l->a, l1->a) || !pointsDiffer(l->a, l1->b))
+        {
+            if (Collinear(l->a, l1->a, l1->b) && Collinear(l->b, l1->a, l1->b)) // collinear points
+                return false;
+            l->test0++;
+        }
+        if (!pointsDiffer(l->b, l1->a) || !pointsDiffer(l->b, l1->b))
+        {
+            if (Collinear(l->a, l1->a, l1->b) && Collinear(l->b, l1->a, l1->b)) // collinear points
+                return false;
+            l->test1++;
+        }
+
+        if (l->test0 >= 2 || l->test1 >= 2)
+        {
+            //logoutf("line %u can't be added to cycle! ta:%d tb:%d ids: [%s]", id, l->test0, l->test1, idxToString().c_str());
+            return false;
+        }
+
+        PolyLine ls(l->center, l1->center);
+        for (auto &id2 : idx)
+        {
+            if (id2 != id && id2 != id1)
+            {
+                auto l2 = pd.findLine(id2);
+                if (l2 && ls.PolyIntersects(*l2))
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    idx.insert(id);
+    return true;
+}
+
+bool PolyDetector::BuildCycle(uint32_t id, PolyCycle cycle) // as value!
+{
+    //if (cycle.idx.size() >= 15) // limit the number of poly edges? maybe someone needs that
+    //    return true;
+
+    auto l = findLine(id);
+    if (!l)
+        return true;
+
+    if (_neighbors[id].size() < 4) // connected / line splitted
+    {
+        return true;
+    }
+
+    if (!silent)
+        cycle.print((std::string("[PROC:") + std::to_string(id) + std::string("]")).c_str());
+
+    // cycle closed! -> cache it
+    if (cycle.canBeClosed(id))
+    {
+        cycle.isClosed = true;
+
+        if (!silent)
+            cycle.print("[CLOSED] ");
+
+        if (!similarCycle(_cycles, cycle))
+        {
+            _cycles.push_back(cycle);
+            if (!silent)
+                cycle.print("[ACCEPTED] ");
+            //logoutf("nCycles:%u", uint32_t(_cycles.size()));
+        }
+        else
+        {
+            if (!silent)
+                cycle.print("[CYCLE_EXISTS] ");
+        }
+
+        return true;
+    }
+
+    // the cycle should be discarded
+    if (!cycle.AddLineId(*this, l->id))
+    {
+        return true;
+    }
+
+    // don't return to the same path again
+    if (CycleProcessed(cycle.idx))
+    {
+        if (!silent)
+            cycle.print("[PROCESSED!] ");
+        return true;
+    }
+    processed.insert(cycle.idx);
+
+    // recur neighbors
+    for (auto &nid : _neighbors[id])
+    {
+        if (_neighbors[nid].size() < 4) continue;
+        if (cycle.canBeClosed(nid) || !cycle.contains(nid))
+        {
+            if (!silent)
+                cycle.print((std::string("[NEIGN:") + std::to_string(nid) + std::string("]")).c_str());
+            BuildCycle(nid, cycle); // recur
+        }
+    }
+
+    return true;
+}
+```
+
+Very simple line neighbor graph, where the key is [line id] and the value is a [list of neighbors], sorted by the line segment center distance!
+
+```
+// Build neighbors
+    std::vector<uint32_t> neigh;
+    _neighbors.clear();
+    for (uint32_t i = 0; i < lines.size(); ++i)
+    {
+        auto &l1 = lines[i];
+        neigh.clear();
+        for (uint32_t j = i + 1; j < lines.size(); ++j)
+        {
+            auto &l2 = lines[j];
+            if (l1.HasCommonPoints(l2))
+            {
+                neigh.push_back(j);
+            }
+        }
+        if (!neigh.empty())
+        {
+            std::sort(neigh.begin(), neigh.end(), [this, &i, &l1](const uint32_t &a, const uint32_t &b) {
+                auto da = lines[a].center.squaredist(l1.center);
+                auto db = lines[b].center.squaredist(l1.center);
+                return da < db;
+            });
+            for (auto &n : neigh)
+            {
+                _neighbors[i].push_back(n);
+                _neighbors[n].push_back(i);
+            }
+        }
+    }
+```
+
+And now start the algo:
+```
+for (auto &kv : _neighbors) // point by point
+    {
+        if (_neighbors[kv.first].size() < 4) continue; // connected
+        PolyCycle cycle;
+        cycle.startIdx = kv.first;
+        BuildCycle(kv.first, cycle);
+    }
+```
+
+# Usage
+Very simple: pass the list of line segments in 2D, detect and process the detected polygons.
+
+```
+    std::vector<PolyLine> lines = {
+        { { 0.481273, 19.263916 }, { 2.672669, -20.676010 } },
+    ....
+    };
+    PolyDetector pd; // can be reused
+    for (auto &l : lines)
+        pd.AddLine(l);
+
+    if (!pd.DetectPolygons()) // can be reused
+    {
+        logoutf("%s", "WARN: cannot detect polys!");
+        return -1;
+    }
+
+    for (auto &poly : pd.polys) // here are the detected polys
+    {
+        for (auto &p : poly.p)
+        {
+            logoutf("[%u] p:{%f %f}", poly.id, p.x, p.y);
+        }
+    }
+```
 
 # Results:
 
