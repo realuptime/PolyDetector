@@ -6,25 +6,15 @@ See how fast it is:
 
 $ time ./app
 
-Polygon detection
+nPolys:241 dissolveSteps:2 lines:514
 
-Line intersection removal
+real    0m0.080s
 
-582 lines after intersection removal
+user    0m0.063s
 
-Polygon set construction (MY)
+sys     0m0.016s
 
-neighbors MatSize:582
-
-Polygon set contains 195 polygons.
-
-real    **0m0.057s**
-
-user    0m0.047s
-
-sys     0m0.000s
-
-$
+#
 
 ![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-09%20at%2020.21.49.png)
 ![alt tag](https://github.com/realuptime/PolyDetector/blob/main/Screen%20Shot%202021-02-10%20at%2013.19.53.png)
