@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "geom.h"
@@ -6,24 +5,57 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <cmath>
 #include <map>
 #include <set>
+#include <list>
 #include <vector>
 
+#define logoutf1(x) printf(x "\n")
 #define logoutf(format, ...) printf(format "\n", __VA_ARGS__)
 
+struct PolyLine;
 struct PolyDetector;
 
-using PointType = vec; // define whatever you want in here
 using CycleSet = std::set<uint32_t>;
+
+enum class RmLinesType : int
+{
+    TakenTwice = 0, // rm lines taken twice
+    Collinear, // dissolve collinear lines
+    NoPointNeigh, // rm lines with one point not having neighbors
+    PointConsumed, // point has 2 lines connected all taken
+};
+
+#if 1
+using PointType = vec;
+#else
+// In case some additional members are needed
+struct PointType : public vec
+{
+    PointType() {}
+    
+    PointType(vecType v) :
+        vec(v)
+    {}
+    
+    PointType(vecType xP, vecType yP, vecType zP):
+        vec(xP, yP, zP)
+    {}
+    
+    //bool ignore = false;
+    uint32_t took = 0;
+};
+#endif
 
 struct PolyCycle
 {
     CycleSet idx;
     
-    uint32_t startIdx = 0;
-    bool isClosed = false;
-    bool fine = true;
+    uint32_t startIdx;
+    bool isClosed;
+    bool fine;
+    //uint32_t colStep = 0; // use it to increase the recursive colliniar length
     
     bool canBeClosed(uint32_t idToAdd) const
     {
@@ -34,6 +66,8 @@ struct PolyCycle
     {
         return std::find(idx.begin(), idx.end(), idP) != idx.end();
     }
+    
+    uint32_t numCuts(PolyDetector &pd, const PolyLine &l) const;
     
     bool AddLineId(PolyDetector &pd, uint32_t id);
     
@@ -51,12 +85,12 @@ struct PolyCycle
     
     std::string toString() const
     {
-        std::string str = "[" + std::to_string(startIdx) + "] nLines:";
+        std::string str = "C{[" + std::to_string(startIdx) + "] nLines:";
         str += std::to_string(idx.size());
         
         str += " [";
         str += idxToString();
-        str += "]";
+        str += "]}";
         
         return str;
     }
@@ -65,66 +99,102 @@ struct PolyCycle
     {
         logoutf("%s%s", msg ? msg : "", toString().c_str());
     }
+    
+    bool Equals(const PolyCycle &p) const;
+    
+    bool convex(PolyDetector &pd) const;
+    
+    bool pointConsumed(PolyDetector &pd, uint32_t pid) const;
 };
 using PolyCycles = std::vector<PolyCycle>;
 
-struct PolyLine 
+struct PolyLine
 {
-    vec a, b;
-
-    PolyLine() {}
-    PolyLine(const PointType &aP, const PointType &bP): a(aP), b(bP)
-    {
-        CalculateFirstAndLastPoint();
-        center = a;
-        center.add(b);
-        center.mul(0.5f);
-    }
+    PointType a, b;
     
-    bool toRemove = false;
-    std::vector<PointType> intersections;
+    PolyLine() {}
+    PolyLine(const PointType &aP, const PointType &bP):
+        a(aP), b(bP)
+    {}
+    
+    std::vector<uint32_t> intersections;
+    std::set<uint32_t> intersectedLines;
     PointType center;
     uint32_t id = 0;
     uint32_t test0 = 0, test1 = 0;
-
     //obb::Line normal;
+    int32_t origLine = -1;
+    int32_t attr0 = -1; // used for testing
+    
+    bool ignore = false;
+    uint32_t took = 0;
+    
+    uint32_t aIdx = 0, bIdx = 0;
+    
+    uint32_t lastDissolveStep = 0;
+    
     //obb::Line &calcNormal(PolyDetector &pd);
     
+    void calcCenter();
+    
     bool HasCommonPoints(const PolyLine &line) const;
+    bool HasCommonIdxPoints(const PolyLine &line) const;
+    bool Equals(const PolyLine &line) const;
     
-    void SortIntersectionsList();
-    inline bool HaveIntersections() { return !intersections.empty(); };
-    
-    inline bool PolyContains(const PolyLine &line) const;
-    inline bool PolyContains(const PointType &point) const;
-    
-    inline bool StrictContains(const PolyLine &line) const;
-    inline bool StrictContains(const PointType &line) const;
-    
+    void SortIntersectionsList(PolyDetector &pd);
+
     inline bool PolyIntersects(const PolyLine &line) const;
-    inline bool PolyIntersectsProper(const PolyLine &line) const;
     
     bool IntersectionPoint(const PolyLine &line, PointType &pos) const;
+    bool LineLineIntersectionPoint(const PolyLine &line, PointType &pos) const;
     
     void CalculateFirstAndLastPoint();
 
-    static int SimplifiedLine(const PolyLine &l1, const PolyLine &l2, PolyLine &ret);
     static bool HaveCommonPoints(const PolyLine &l1, const PolyLine &l2);
+    static bool HaveCommonIdxPoints(const PolyLine &l1, const PolyLine &l2);
     
     static bool bCompareLineOrder(const PolyLine &l1, PolyLine &l2);
     static int iCompareLineOrder(const PolyLine &l1, PolyLine &l2);
+    
+    std::string neighToString(PolyDetector &pd, uint32_t *retNNeigh = nullptr) const;
+    std::string toString(PolyDetector &pd) const;
+    uint32_t numNeigh(PolyDetector &pd) const;
+    uint32_t numIntersections(PolyDetector &pd) const;
+    
+    uint32_t canBeRemoved(PolyDetector &pd, RmLinesType type) const;
+    
+    PolyLine &mul(float m)
+    {
+        a.mul(m);
+        b.mul(m);
+        return *this;
+    }
+    PolyLine &add(const PointType &p)
+    {
+        a.add(p);
+        b.add(p);
+        return *this;
+    }
+    
+    void setIgnore(PolyDetector &pd, const char *msg);
 };
 
 struct PolyPol
 {
-    std::vector<vec> p;
-
-    uint32_t GetCount() const { return (uint32_t)p.size(); };
+    // members {
+    std::vector<PointType> p;
+    size_t firstIdx = 0;
     
-    bool IsAdjacent(const PolyPol &p, bool strict = false) const;
+    PolyCycle cycle;
     
-    bool PolyContains(const PolyPol &other, bool strict = false);
-    bool PolyContains(const PointType &point, bool strict = false);
+    uint32_t id;
+    uint32_t dissolveStep = 0;
+    
+    //obb::Polygon poly;
+    double _area;
+    // } members
+    
+    uint32_t GetCount() const { return (uint32_t)p.size(); }
     
     void CalculateFirstAndLastPoint();
     
@@ -135,55 +205,82 @@ struct PolyPol
     
     void addLine(const PolyLine &l);
     
+    bool addPointChecked(const PointType &v);
+    
     PointType center();
     
     void genTriangePoints(PolyDetector &pd);
     double TriangleArea(PolyDetector &pd);
-    double _area;
     
-    size_t firstIdx = 0;
-    
-    PolyCycle cycle;
-    
-    uint32_t id;
+    //obb::Polygon &updatePoly();
 };
 
 struct PolyDetector
 {
-    std::set<CycleSet> processed;
     using LineVector = std::vector<PolyLine>;
+    using LineList = std::list<PolyLine>;
     using PolyVector = std::vector<PolyPol>;
-
-    LineVector lines;
-    PolyVector polys;
-    bool silent = true;
     
-    uint32_t GetLineCount() const { return (uint32_t)lines.size(); };
+    // members {
+    PolyCycles _cycles;
+    std::set<CycleSet> processed;
+    
+    LineVector
+        origLines, // from user
+        lines; // active lines
+    PolyVector polys;
+    uint32_t verbose = 0;
+    
+    std::map<uint32_t, std::vector<uint32_t>> _neighbors; // key: lid, val: vec(neighborLine)
+    std::map<uint32_t, std::vector<uint32_t>> collinearLineMap; // key: lid, val: vec(collinearLine)
+    
+    std::vector<PointType> intersectionPoints;
+    std::map<uint32_t, std::vector<uint32_t>> pointToLines;
+    
+    uint32_t dissolveCount = 0;
+    
+    // } members
+    
+    // ops {
+    void reset();
+    void AddLine(const PolyLine &line);
+    bool DetectPolygons();
+    PolyVector &getPolys() { return polys; }
+    // } ops
+    
+    PolyLine *findLine(uint32_t id, bool useIgnore = true);
+    
     uint32_t GetPolyCount() const { return (uint32_t)polys.size(); };
     void SortLines();
     
-    void AddLine(const PolyLine &line);
-    
     bool CycleProcessed(const CycleSet &cycle) const;
     
-    bool RemoveIntersections();
-    
+    // The order of operations
     void RemoveZeroLengthLines();
     void RemoveOverlappings();
     uint32_t DetectAllIntersections();
-    bool DetectPolygons();
+    bool CreateLines();
+    bool FindPolys();
+    void SimplifyPolys(double smaller_polygon_length);
     
     PointType *getPointByID(size_t id);
     
     bool BuildCycle(uint32_t id, PolyCycle cycle); // as value!
-    bool FindPolys();
-    
-    // Simplifies the polygon set
-    void SimplifyPolys(double smaller_polygon_length);
-    
-    PolyCycles _cycles;
-    std::map<uint32_t, std::vector<uint32_t>> _neighbors;
-    PolyLine *findLine(uint32_t id);
     
     bool Overlap(const PolyCycle &c1, const PolyCycle &c2);
+    
+    PolyLine newLine(uint32_t i, uint32_t j, PolyLine &origLine);
+    
+    // collinearity
+    void setCollinear(uint32_t l1, uint32_t l2);
+    bool CollinearIdx(uint32_t l1, uint32_t l2);
+    bool CollinearIdx(const PolyLine &l1, const PolyLine &l2);
+    
+    bool rmLines(RmLinesType type);
+    bool rmEarPoints();
+    
+    // dissolve
+    bool dissolveCollinearLine(PolyLine &l);
+    bool dissolveCollinear(PolyLine &l1, PolyLine &l2);
+    bool dissolve();
 };

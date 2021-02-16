@@ -35,6 +35,8 @@ int main(int argc, char **argv)
     };
 
     PolyDetector pd;
+	//pd.verbose = 1;
+	
     for (auto &l : lines)
         pd.AddLine(l);
 
@@ -43,8 +45,10 @@ int main(int argc, char **argv)
         logoutf("%s", "WARN: cannot detect polys!");
         return -1;
     }
+	
+	//logoutf("nPolys:%u dissolveCount:%u lines:%u", uint32_t(pd.polys.size()), pd.dissolveCount, uint32_t(pd.lines.size()));
 
-#if 1
+#if 0
     for (auto &poly : pd.polys)
     {
         for (auto &p : poly.p)
