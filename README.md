@@ -1,6 +1,9 @@
 # PolyDetector
 Detect all closed polygons given a set of line segments
 
+# Update
+Repeat poly detection by cutting the detected polygon/cycle ears (free point connected to two lines), eliminating the detected lines picked two times and collinear remaining lines until no cycle is detected.
+
 # Speed
 See how fast it is:
 
