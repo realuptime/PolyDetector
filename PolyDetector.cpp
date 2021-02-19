@@ -1013,7 +1013,7 @@ uint32_t PolyDetector::DetectAllIntersections()
                 }
             }
         }
-        if (ok)
+        if (ok && verbose)
             logoutf("[%u] ok!", times);
         times++;
     }
